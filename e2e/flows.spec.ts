@@ -37,11 +37,30 @@ test("import replaces all current data after confirmation", async ({ page }) => 
   await page.getByRole("button", { name: /Settings/ }).click();
   page.on("dialog", (d) => void d.accept()); // accept the "replace ALL" confirm
   await page
-    .locator('input[type="file"][accept*="json"]')
+    .locator('input[aria-label="Импорт JSON"]')
     .setInputFiles("e2e/fixtures/import.json");
 
   await expect(page.getByText("Imported Flat")).toBeVisible();
   await expect(page.getByText("Original Flat")).toHaveCount(0);
+});
+
+test("append adds apartments from a file, keeping the existing ones", async ({ page }) => {
+  // Append shows a "added N" alert and (unlike replace-all import) no confirm.
+  page.on("dialog", (d) => void d.accept());
+  await page.goto("/");
+  await page.getByRole("button", { name: "+ Add first appartment" }).click();
+  await page.getByPlaceholder("Apartment name").fill("Kept Flat");
+  await page.getByRole("button", { name: "Назад" }).click();
+  await expect(page.getByText("Kept Flat")).toBeVisible();
+
+  await page.getByRole("button", { name: /Settings/ }).click();
+  await page
+    .locator('input[type="file"][aria-label="Добавить квартиры из JSON"]')
+    .setInputFiles("e2e/fixtures/import.json");
+
+  // The action navigates back to the list; both apartments are present.
+  await expect(page.getByText("Imported Flat")).toBeVisible();
+  await expect(page.getByText("Kept Flat")).toBeVisible();
 });
 
 test("delete an apartment after confirming", async ({ page }) => {

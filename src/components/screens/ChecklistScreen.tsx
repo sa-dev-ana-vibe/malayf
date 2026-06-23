@@ -184,9 +184,24 @@ export default function ChecklistScreen() {
             />
           </label>
         </div>
+        <label className="mt-[8px] flex items-center justify-center w-full p-[11px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft rounded-[10px] text-accent text-[12.5px] font-bold cursor-pointer text-center">
+          ➕ Добавить квартиры из JSON
+          <input
+            type="file"
+            accept="application/json,.json"
+            aria-label="Добавить квартиры из JSON"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void actions.appendApartments(f);
+              e.currentTarget.value = "";
+            }}
+            className="hidden"
+          />
+        </label>
         <div className="text-[11px] text-faint leading-[1.5] mt-[8px]">
           Экспорт сохранит все квартиры, чек-лист, метки и ред-флаги в файл. Импорт заменит
-          текущие данные.
+          текущие данные. «Добавить квартиры из JSON» только дополнит список квартир из файла
+          — чек-лист, метки и ред-флаги останутся как есть.
         </div>
       </div>
 

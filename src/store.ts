@@ -24,6 +24,7 @@ import {
   buildExport,
   loadState,
   migrateInlinePhotos,
+  parseAppendVisits,
   parseImport,
   persist,
   triggerDownload,
@@ -501,6 +502,25 @@ export const actions = {
       },
       true,
     );
+  },
+  // Additive import: append apartments from a file to the existing list,
+  // leaving the checklist/tags/red flags untouched. Non-destructive, so no
+  // confirmation — just a count of what was added.
+  appendApartments: async (file: File) => {
+    const text = await file.text();
+    let appended;
+    try {
+      appended = await parseAppendVisits(text);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Не удалось прочитать файл.");
+      return;
+    }
+    if (!appended.length) {
+      alert("В файле нет квартир для добавления.");
+      return;
+    }
+    set((s) => ({ visits: [...s.visits, ...appended], screen: "visits" }), true);
+    alert("Добавлено квартир: " + String(appended.length));
   },
 };
 

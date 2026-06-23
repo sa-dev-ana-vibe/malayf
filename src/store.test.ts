@@ -106,6 +106,43 @@ describe("checklist weights", () => {
   });
 });
 
+describe("appendApartments (additive import)", () => {
+  it("adds apartments from a file without replacing the existing list", async () => {
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+    const before = result.current.visits.length;
+
+    const file = new File(
+      [JSON.stringify({ visits: [{ id: "from-file", name: "Appended Flat" }] })],
+      "append.json",
+      { type: "application/json" },
+    );
+    await act(async () => {
+      await store.actions.appendApartments(file);
+    });
+
+    expect(result.current.visits).toHaveLength(before + 1);
+    expect(result.current.visits.some((v) => v.name === "Appended Flat")).toBe(true);
+    // The appended visit is given a fresh id (not the file's "from-file").
+    expect(result.current.visits.some((v) => v.id === "from-file")).toBe(false);
+  });
+
+  it("rejects a file with no visits array and leaves data untouched", async () => {
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+
+    const bad = new File([JSON.stringify({ nope: true })], "bad.json", {
+      type: "application/json",
+    });
+    await act(async () => {
+      await store.actions.appendApartments(bad);
+    });
+    expect(result.current.visits).toHaveLength(1);
+  });
+});
+
 describe("persistence", () => {
   it("writes new visits to localStorage", async () => {
     const store = await freshStore();

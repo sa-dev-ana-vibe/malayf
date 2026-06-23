@@ -9,7 +9,8 @@
 
 import type { AppState, ExportFile, PersistedData, Visit } from "../types";
 import { defaultCats, defaultRedFlags, defaultTags } from "./defaults";
-import { parseImportFile, parseJson, parsePersisted } from "./schema";
+import { uid } from "./format";
+import { parseImportFile, parseJson, parsePersisted, parseVisits } from "./schema";
 import {
   blobToDataUrl,
   dataUrlToBlob,
@@ -198,4 +199,43 @@ export async function parseImport(text: string): Promise<PersistedData> {
     tags: parsed.tags.length ? parsed.tags : defaultTags(),
     redFlags: parsed.redFlags.length ? parsed.redFlags : defaultRedFlags(),
   };
+}
+
+/**
+ * Parse a file for ADDITIVE import — it only needs a `visits` array (an export
+ * file works too; its categories/tags/redFlags are ignored). Each visit gets a
+ * FRESH id so it can't collide with an existing or another appended visit, and
+ * its inline data-URL photos are moved into IndexedDB. Throws a user-facing
+ * message when there is no visits array.
+ *
+ * Note: a visit's checklist answers are keyed by checklist-item id, so appended
+ * apartments only score when they came from the same master checklist.
+ */
+export async function parseAppendVisits(text: string): Promise<Visit[]> {
+  const raw = parseJson(text);
+  const o =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : null;
+  if (!o || !Array.isArray(o.visits)) {
+    throw new Error("Неверный файл: нет списка квартир (visits).");
+  }
+
+  const out: Visit[] = [];
+  for (const v of parseVisits(o.visits)) {
+    const photos: string[] = [];
+    let floorPlan: string | null = null;
+    for (const url of v.photos) {
+      if (!isDataUrl(url)) continue;
+      try {
+        const id = await putPhoto(dataUrlToBlob(url));
+        photos.push(id);
+        if (v.floorPlan === url) floorPlan = id;
+      } catch (e) {
+        console.warn("skipped a corrupt photo during append", e);
+      }
+    }
+    out.push({ ...v, id: uid(), photos, floorPlan });
+  }
+  return out;
 }

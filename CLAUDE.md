@@ -55,33 +55,34 @@ The design source of truth (recreate its visual output pixel-for-pixel) is:
 ## Quality protocol — REVIEW THEN COMMIT (required)
 
 `FRONTEND_QUALITY.md` is the **judgment-layer rulebook** (the gates a compiler and
-linter can't check). The split is deliberate:
+linter can't check). Quality has **three gates**, mirroring the protocol in the
+sibling `todo-platform` project:
 
-- **Machine gates** → `npm run verify` (tsc + eslint + build). Must pass.
-- **Judgment gates** → a **reviewer subagent**, run against `FRONTEND_QUALITY.md`.
+- **Gate 1 — Machine** → `npm run verify` (tsc + eslint + build). Must pass.
+- **Gate 2 — Judgment review** → a **reviewer subagent (Reviewer A)** against
+  `FRONTEND_QUALITY.md`. Role prompt: `reviews/_role-react.md`.
+- **Gate 3 — QA / manual test** → a **QA subagent (Reviewer B)** that **runs the app
+  like a user** (Playwright MCP against `npm run dev`) and confirms every control is
+  wired, zero console errors, empty/error states, mobile 430px, keyboard focus. Role
+  prompt: `reviews/_role-qa.md`. This is the gate that catches "looks done but the
+  button does nothing."
 
 **After each todo-list item (each meaningful chunk of work), BEFORE committing:**
 
-1. **Run the machine gate**: `npm run verify` must be green (typecheck + lint;
-   `build` once the app has an entry point).
-2. **Spawn a reviewer subagent** (Agent tool) whose job is to audit *only the diff
-   for this chunk* against `FRONTEND_QUALITY.md` §1–§11 — type design, parse-don't-
-   validate at boundaries (localStorage + imported JSON are untrusted), effects
-   that shouldn't exist, derive-don't-store, component responsibility, a11y beyond
-   the linter, error/empty/loading states, naming/intent. The reviewer reports
-   findings as **blocking** vs **non-blocking**, each tied to a file:line and a §.
-3. **Address blocking findings** (and worthwhile non-blocking ones). Re-run the
-   machine gate.
-4. **Commit that chunk** with a focused message. **One todo item ≈ one commit.**
+1. **Gate 1**: `npm run verify` is green.
+2. **Gate 2**: spawn a reviewer subagent with `reviews/_role-qa.md`'s sibling
+   `reviews/_role-react.md`, scoped to *this chunk's* diff. It writes its verdict to
+   `reviews/<chunk>-react.md`.
+3. **Gate 3**: spawn a **QA subagent** with `reviews/_role-qa.md`, scoped to this
+   chunk's user-visible flows. It RUNS the app (Playwright MCP) and writes its verdict
+   to `reviews/<chunk>-qa.md`. **Skip only when the chunk produces nothing runnable
+   yet** (e.g. pure foundation before an entry point exists) — note that in the commit.
+4. **Address all blocking findings** (and worthwhile non-blocking ones) from both
+   reviewers. Re-run Gate 1.
+5. **Commit that chunk** with a focused message. **One todo item ≈ one commit.**
 
-Reviewer prompt skeleton:
-> Review ONLY these changed files against FRONTEND_QUALITY.md. For each gate §1–§11
-> that applies, cite file:line and classify blocking/non-blocking. Be concrete; do
-> not restate the rulebook. Flag any `as`-cast of untrusted data, any effect used
-> to transform data or handle an event, any stored-but-derivable state, any missing
-> empty/error state, any interactive element that isn't keyboard-operable.
-
-Do not batch many todo items into one unreviewed commit. Do not commit red gates.
+Do not batch many todo items into one unreviewed commit. Do not commit red gates. A
+dead control or a console error found by Gate 3 is a blocking auto-reject.
 
 ## Commit style
 - Imperative, scoped subject (e.g. `feat(detail): apartment detail screen`).

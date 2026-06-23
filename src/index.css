@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* ── Design tokens, ported 1:1 from the AptCheck prototype ────────────── */
+@theme {
+  --font-sans: "Rubik", system-ui, sans-serif;
+
+  --color-accent: #6a35d9;
+  --color-accent-soft: #f1ecfb;
+  --color-accent-dark: #4a1fb0;
+
+  --color-ink: #211d2b;
+  --color-ink-soft: #332f3d;
+
+  --color-page: #dedbe6;
+  --color-surface: #f7f6fa;
+  --color-card: #ffffff;
+  --color-soft: #faf9fc;
+
+  --color-line: #e6e3ee;
+  --color-line-soft: #f1eff5;
+  --color-line-faint: #eeecf3;
+  --color-dashed: #cdc8da;
+
+  --color-muted: #9b97a6;
+  --color-muted-2: #8a8794;
+  --color-muted-3: #6f6b7a;
+  --color-faint: #b0aabf;
+  --color-brand: #635b6b;
+
+  --color-pass: #1f9d63;
+  --color-fail: #d6453f;
+  --color-warn: #c08410;
+  --color-delete: #c9909a;
+  --color-star: #e6a817;
+  --color-star-empty: #dcd8e4;
+}
+
+/* ── Base resets matching the prototype's <helmet> styles ─────────────── */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    color: var(--color-ink);
+    background: var(--color-page);
+  }
+  input,
+  textarea,
+  button,
+  select {
+    font-family: inherit;
+    color: inherit;
+  }
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+  }
+  textarea {
+    resize: none;
+  }
+  ::placeholder {
+    color: #b3afbd;
+  }
+  /* Hide scrollbars — the prototype runs in a phone-sized frame. */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  * {
+    scrollbar-width: none;
+  }
+}

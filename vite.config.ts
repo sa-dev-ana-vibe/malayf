@@ -5,6 +5,10 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path is env-driven so the same build works at the domain root (local
+  // preview, custom domain) and under a GitHub Pages project subpath. The Pages
+  // workflow sets VITE_BASE to "/<repo-name>/".
+  base: process.env.VITE_BASE ?? "/",
   plugins: [
     react(),
     tailwindcss(),
@@ -20,8 +24,9 @@ export default defineConfig({
         background_color: "#dedbe6",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
-        scope: "/",
+        // Relative so they resolve correctly under any base (root or /<repo>/).
+        start_url: ".",
+        scope: ".",
         lang: "ru",
         icons: [
           {

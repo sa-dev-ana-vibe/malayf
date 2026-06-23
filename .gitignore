@@ -24,6 +24,9 @@ pnpm-debug.log*
 # PWA generated artifacts
 dev-dist/
 
+# Playwright MCP session artifacts
+.playwright-mcp/
+
 # design handoff inputs (reproducible from the zip; not app source)
 /Apartment checklist app (final solo ver)-handoff.zip
 /extracted/

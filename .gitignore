@@ -27,6 +27,12 @@ dev-dist/
 # Playwright MCP session artifacts
 .playwright-mcp/
 
+# Playwright / test output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # design handoff inputs (reproducible from the zip; not app source)
 /Apartment checklist app (final solo ver)-handoff.zip
 /extracted/

@@ -1,0 +1,37 @@
+{
+  "app": "aptcheck",
+  "version": 1,
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "c1",
+      "name": "Imported Category",
+      "weight": 100,
+      "items": [{ "id": "i1", "text": "Imported item", "type": "ternary" }]
+    }
+  ],
+  "visits": [
+    {
+      "id": "v1",
+      "name": "Imported Flat",
+      "address": "Imported street 1",
+      "results": {},
+      "photos": [],
+      "floorPlan": null,
+      "links": [],
+      "contacts": [],
+      "tagIds": [],
+      "redFlags": [],
+      "dates": [],
+      "price": "",
+      "areaTotal": "",
+      "areaLiving": "",
+      "floor": "",
+      "floorsTotal": "",
+      "houseType": "",
+      "yearBuilt": ""
+    }
+  ],
+  "tags": [],
+  "redFlags": []
+}

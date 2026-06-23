@@ -39,6 +39,8 @@ function PhotoThumb({
       <button
         onClick={() => actions.toggleFloorPlan(id)}
         title={isFloorPlan ? "Планировка" : "Отметить как планировку"}
+        aria-label={isFloorPlan ? "Убрать отметку планировки" : "Отметить как планировку"}
+        aria-pressed={isFloorPlan}
         className="absolute top-[3px] left-[3px] h-[20px] min-w-[20px] border-none rounded-[5px] text-white text-[10px] font-extrabold leading-none cursor-pointer flex items-center justify-center gap-[3px]"
         style={{
           padding: isFloorPlan ? "0 6px" : "0",
@@ -408,6 +410,7 @@ export default function DetailScreen() {
               <button
                 key={t.id}
                 onClick={() => actions.toggleVisitTag(t.id)}
+                aria-pressed={av.tagIds.includes(t.id)}
                 style={tagChip(t.color, av.tagIds.includes(t.id), false)}
               >
                 {t.name}
@@ -445,6 +448,7 @@ export default function DetailScreen() {
               <button
                 key={label}
                 onClick={() => actions.toggleRedFlag(label)}
+                aria-pressed={av.redFlags.includes(label)}
                 style={redFlagChip(av.redFlags.includes(label))}
               >
                 {label}
@@ -615,18 +619,21 @@ export default function DetailScreen() {
                           <div className="flex gap-[7px]">
                             <button
                               onClick={() => actions.setResult(it.id, "pass")}
+                              aria-pressed={r === "pass"}
                               style={btnStyle(r === "pass", "pass")}
                             >
                               Pass
                             </button>
                             <button
                               onClick={() => actions.setResult(it.id, "fail")}
+                              aria-pressed={r === "fail"}
                               style={btnStyle(r === "fail", "fail")}
                             >
                               Fail
                             </button>
                             <button
                               onClick={() => actions.setResult(it.id, "na")}
+                              aria-pressed={r === "na"}
                               style={btnStyle(r === "na", "na")}
                             >
                               N/A
@@ -640,6 +647,8 @@ export default function DetailScreen() {
                                 <button
                                   key={n}
                                   onClick={() => actions.setResultForce(it.id, n)}
+                                  aria-label={`Поставить оценку ${n} из 5`}
+                                  aria-pressed={n <= (Number(r) || 0)}
                                   className="border-none bg-transparent cursor-pointer text-[27px] leading-none px-[1px]"
                                   style={{ color: n <= (Number(r) || 0) ? "#e6a817" : "#dcd8e4" }}
                                 >
@@ -655,7 +664,11 @@ export default function DetailScreen() {
                                 сброс
                               </button>
                             ) : null}
-                            <button onClick={() => actions.setResult(it.id, "na")} style={naChip(naOn)}>
+                            <button
+                              onClick={() => actions.setResult(it.id, "na")}
+                              aria-pressed={naOn}
+                              style={naChip(naOn)}
+                            >
                               N/A
                             </button>
                           </div>
@@ -670,6 +683,7 @@ export default function DetailScreen() {
                                 <button
                                   key={o.id}
                                   onClick={() => actions.setResult(it.id, o.id)}
+                                  aria-pressed={on}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -705,7 +719,11 @@ export default function DetailScreen() {
                                 </button>
                               );
                             })}
-                            <button onClick={() => actions.setResult(it.id, "na")} style={naChip(naOn)}>
+                            <button
+                              onClick={() => actions.setResult(it.id, "na")}
+                              aria-pressed={naOn}
+                              style={naChip(naOn)}
+                            >
                               N/A — не применимо
                             </button>
                           </div>

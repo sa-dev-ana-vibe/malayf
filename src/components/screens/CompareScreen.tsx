@@ -75,6 +75,7 @@ export default function CompareScreen() {
               <button
                 key={v.id}
                 onClick={() => actions.toggleCompare(v.id)}
+                aria-pressed={compareIds.includes(v.id)}
                 style={compareChip(compareIds.includes(v.id))}
               >
                 {v.name || "Untitled"}

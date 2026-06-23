@@ -17,7 +17,7 @@ test("photo: upload, mark as floor plan, and survive a reload", async ({ page })
   await expect(page.getByRole("img").first()).toBeVisible();
 
   // Mark it as the floor plan → the ▦ badge gains the "ПЛАН" label.
-  await page.getByRole("button", { name: "▦", exact: true }).click();
+  await page.getByRole("button", { name: "Отметить как планировку" }).click();
   await expect(page.getByText("ПЛАН")).toBeVisible();
 
   // Reload (photo Blob lives in IndexedDB), reopen, and confirm both survive.

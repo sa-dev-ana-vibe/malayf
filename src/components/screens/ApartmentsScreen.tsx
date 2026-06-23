@@ -77,6 +77,7 @@ export default function ApartmentsScreen() {
               <button
                 key={t.id}
                 onClick={() => actions.toggleFilter(t.id)}
+                aria-pressed={tagFilter.includes(t.id)}
                 style={{ ...tagChip(t.color, tagFilter.includes(t.id), false), flexShrink: 0 }}
               >
                 {t.name}

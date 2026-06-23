@@ -211,6 +211,29 @@ export async function parseImport(text: string): Promise<PersistedData> {
  * Note: a visit's checklist answers are keyed by checklist-item id, so appended
  * apartments only score when they came from the same master checklist.
  */
+/**
+ * Inject string ids where an LLM-generated listing omitted them (visit, and its
+ * links/contacts) so the strict schemas keep the data instead of dropping it.
+ * Objects that already carry a string id are left untouched.
+ */
+function injectIds(el: unknown): unknown {
+  if (!el || typeof el !== "object" || Array.isArray(el)) return el;
+  const o = { ...(el as Record<string, unknown>) };
+  if (typeof o.id !== "string") o.id = uid();
+  for (const key of ["links", "contacts"] as const) {
+    const arr: unknown = o[key];
+    if (Array.isArray(arr)) {
+      o[key] = (arr as unknown[]).map((it: unknown) =>
+        it && typeof it === "object" && !Array.isArray(it) &&
+        typeof (it as Record<string, unknown>).id !== "string"
+          ? { ...(it as Record<string, unknown>), id: uid() }
+          : it,
+      );
+    }
+  }
+  return o;
+}
+
 export async function parseAppendVisits(text: string): Promise<Visit[]> {
   const raw = parseJson(text);
   const o =
@@ -222,7 +245,7 @@ export async function parseAppendVisits(text: string): Promise<Visit[]> {
   }
 
   const out: Visit[] = [];
-  for (const v of parseVisits(o.visits)) {
+  for (const v of parseVisits((o.visits as unknown[]).map(injectIds))) {
     const photos: string[] = [];
     let floorPlan: string | null = null;
     for (const url of v.photos) {

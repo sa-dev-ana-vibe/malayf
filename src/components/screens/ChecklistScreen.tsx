@@ -1,12 +1,31 @@
+import { useState } from "react";
 import { useApp, actions } from "../../store";
 import { itemType } from "../../lib/scoring";
+import { buildAppendPrompt } from "../../lib/prompt";
 import type { ItemType } from "../../types";
 
 export default function ChecklistScreen() {
   const { categories } = useApp();
+  const [promptCopied, setPromptCopied] = useState(false);
 
   const weightTotal = categories.reduce((n, c) => n + (Number(c.weight) || 0), 0);
   const weightTotalColor = weightTotal === 100 ? "#1f9d63" : "#d6453f";
+
+  const copyPrompt = () => {
+    const prompt = buildAppendPrompt();
+    navigator.clipboard
+      .writeText(prompt)
+      .then(() => {
+        setPromptCopied(true);
+        setTimeout(() => setPromptCopied(false), 2000);
+      })
+      .catch(() => {
+        // Clipboard blocked (insecure context / permissions) — log it so the
+        // user can still copy it by hand.
+        console.log(prompt);
+        alert("Не удалось скопировать автоматически — промпт выведен в консоль.");
+      });
+  };
 
   return (
     <div className="p-[14px] flex flex-col gap-[12px]">
@@ -184,6 +203,12 @@ export default function ChecklistScreen() {
             />
           </label>
         </div>
+        <button
+          onClick={copyPrompt}
+          className="mt-[8px] w-full p-[11px] border border-line bg-card rounded-[10px] text-ink-soft text-[12.5px] font-bold cursor-pointer"
+        >
+          {promptCopied ? "✓ Скопировано" : "📋 Скопировать промпт для LLM"}
+        </button>
         <label className="mt-[8px] flex items-center justify-center w-full p-[11px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft rounded-[10px] text-accent text-[12.5px] font-bold cursor-pointer text-center">
           ➕ Добавить квартиры из JSON
           <input
@@ -201,7 +226,8 @@ export default function ChecklistScreen() {
         <div className="text-[11px] text-faint leading-[1.5] mt-[8px]">
           Экспорт сохранит все квартиры, чек-лист, метки и ред-флаги в файл. Импорт заменит
           текущие данные. «Добавить квартиры из JSON» только дополнит список квартир из файла
-          — чек-лист, метки и ред-флаги останутся как есть.
+          — чек-лист, метки и ред-флаги останутся как есть. «Скопировать промпт для LLM» даст
+          готовый промпт, чтобы превратить текст объявлений в такой JSON.
         </div>
       </div>
 

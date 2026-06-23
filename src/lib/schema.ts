@@ -188,3 +188,58 @@ export function parseImportFile(raw: unknown): PersistedData {
     redFlags: parseStringArray(o.redFlags),
   };
 }
+
+// ── LLM-listing contract (for the "copy prompt" feature) ──────────────────
+// The shape an LLM should emit for ADDITIVE import. Intentionally a clean
+// subset of a visit — no ids/photos/results (the app assigns ids and leaves the
+// rest empty). The .describe() texts become the JSON-Schema descriptions in the
+// generated prompt, so this stays the single source of truth for that contract.
+
+export const HOUSE_TYPES = [
+  "Панельный",
+  "Кирпичный",
+  "Монолит",
+  "Монолитно-кирпичный",
+  "Блочный",
+  "Деревянный",
+] as const;
+
+export const listingSchema = z
+  .object({
+    name: z.string().describe("Краткое название квартиры, напр. «2-комн. у парка»"),
+    address: z.string().describe("Улица, дом, город").optional(),
+    price: z.string().describe("Цена — только цифры строкой, напр. «5500000»").optional(),
+    areaTotal: z
+      .string()
+      .describe("Общая площадь, м² (строка), напр. «54» или «54.3»")
+      .optional(),
+    areaLiving: z.string().describe("Жилая площадь, м² (строка)").optional(),
+    floor: z.string().describe("Этаж (строка)").optional(),
+    floorsTotal: z.string().describe("Этажей в доме (строка)").optional(),
+    yearBuilt: z.string().describe("Год постройки (строка)").optional(),
+    houseType: z.enum(HOUSE_TYPES).describe("Тип дома — одно из значений").optional(),
+    notes: z.string().describe("Заметки: ощущения, соседи, что-то необычное").optional(),
+    links: z
+      .array(
+        z.object({
+          label: z.string().describe("Название источника, напр. «Avito»").optional(),
+          url: z.string().describe("Ссылка на объявление"),
+        }),
+      )
+      .describe("Ссылки на объявления (Avito, Cian, Idealista…)")
+      .optional(),
+    contacts: z
+      .array(
+        z.object({
+          name: z.string().describe("Имя/роль, напр. «Владелец», «Агент»").optional(),
+          value: z.string().describe("Телефон или email"),
+        }),
+      )
+      .describe("Контакты")
+      .optional(),
+    dates: z
+      .array(z.string())
+      .describe("Даты визитов в формате ISO yyyy-mm-dd")
+      .optional(),
+  })
+  .describe("Одна квартира для добавления в MALAYF");

@@ -63,6 +63,18 @@ test("append adds apartments from a file, keeping the existing ones", async ({ p
   await expect(page.getByText("Kept Flat")).toBeVisible();
 });
 
+test("copy-prompt button puts a schema prompt on the clipboard", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Settings/ }).click();
+  await page.getByRole("button", { name: /Скопировать промпт/ }).click();
+  await expect(page.getByRole("button", { name: /Скопировано/ })).toBeVisible();
+
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain('"visits"');
+  expect(copied).toContain("JSON Schema");
+});
+
 test("delete an apartment after confirming", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "+ Add first appartment" }).click();

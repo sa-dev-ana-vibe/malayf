@@ -241,7 +241,7 @@ export async function parseAppendVisits(text: string): Promise<Visit[]> {
       ? (raw as Record<string, unknown>)
       : null;
   if (!o || !Array.isArray(o.visits)) {
-    throw new Error("Неверный файл: нет списка квартир (visits).");
+    throw new Error("Неверный JSON: нет списка квартир (visits).");
   }
 
   const out: Visit[] = [];

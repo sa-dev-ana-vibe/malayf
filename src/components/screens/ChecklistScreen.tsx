@@ -303,26 +303,34 @@ export default function ChecklistScreen() {
         >
           {promptCopied ? "✓ Скопировано" : "📋 Скопировать промпт для LLM"}
         </button>
-        <label className="mt-[8px] flex items-center justify-center w-full p-[11px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft rounded-[10px] text-accent text-[12.5px] font-bold cursor-pointer text-center">
-          ➕ Добавить квартиры из JSON
-          <input
-            type="file"
-            accept="application/json,.json"
-            aria-label="Добавить квартиры из JSON"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void actions.appendApartments(f);
-              e.currentTarget.value = "";
-            }}
-            className="hidden"
-          />
-        </label>
+        <div className="mt-[8px] grid grid-cols-2 gap-[8px]">
+          <label className="flex items-center justify-center p-[11px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft rounded-[10px] text-accent text-[12.5px] font-bold cursor-pointer text-center">
+            ➕ Добавить JSON
+            <input
+              type="file"
+              accept="application/json,.json"
+              aria-label="Добавить квартиры из JSON"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void actions.appendApartments(f);
+                e.currentTarget.value = "";
+              }}
+              className="hidden"
+            />
+          </label>
+          <button
+            onClick={() => void actions.appendApartmentsFromClipboard()}
+            className="p-[11px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft rounded-[10px] text-accent text-[12.5px] font-bold cursor-pointer text-center"
+          >
+            📋 Вставить JSON
+          </button>
+        </div>
         <div className="text-[11px] text-faint leading-[1.5] mt-[8px]">
           Экспорт сохранит все квартиры, чек-лист, метки и ред-флаги в файл.
-          Импорт заменит текущие данные. «Добавить квартиры из JSON» только
-          дополнит список квартир из файла — чек-лист, метки и ред-флаги
-          останутся как есть. «Скопировать промпт для LLM» даст готовый промпт,
-          чтобы превратить текст объявлений в такой JSON.
+          Импорт заменит текущие данные. 
+          «Добавить квартиры из JSON» только дополнит список квартир из файла или буфера — чек-лист, метки и ред-флаги
+          останутся как есть. 
+          «Скопировать промпт для LLM» даст готовый промпт, чтобы превратить текст объявлений в такой JSON.
         </div>
       </div>
 

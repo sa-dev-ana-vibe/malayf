@@ -128,6 +128,36 @@ describe("appendApartments (additive import)", () => {
     expect(result.current.visits.some((v) => v.id === "from-file")).toBe(false);
   });
 
+  it("adds apartments from clipboard JSON", async () => {
+    vi.stubGlobal("navigator", {
+      clipboard: {
+        readText: vi.fn().mockResolvedValue(
+          JSON.stringify({ visits: [{ name: "Clipboard Flat" }] }),
+        ),
+      },
+    });
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+
+    await act(async () => {
+      await store.actions.appendApartmentsFromClipboard();
+    });
+
+    expect(result.current.visits).toHaveLength(1);
+    expect(result.current.visits[0].name).toBe("Clipboard Flat");
+  });
+
+  it("does not append when clipboard is empty", async () => {
+    vi.stubGlobal("navigator", { clipboard: { readText: vi.fn().mockResolvedValue("   ") } });
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+
+    await act(async () => {
+      await store.actions.appendApartmentsFromClipboard();
+    });
+
+    expect(result.current.visits).toHaveLength(0);
+  });
   it("rejects a file with no visits array and leaves data untouched", async () => {
     const store = await freshStore();
     const { result } = renderHook(() => store.useApp());

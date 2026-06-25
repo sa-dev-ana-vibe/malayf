@@ -503,24 +503,46 @@ export const actions = {
       true,
     );
   },
-  // Additive import: append apartments from a file to the existing list,
+  // Additive import: append apartments from JSON to the existing list,
   // leaving the checklist/tags/red flags untouched. Non-destructive, so no
   // confirmation — just a count of what was added.
-  appendApartments: async (file: File) => {
-    const text = await file.text();
+  appendApartmentsText: async (text: string, errorMessage = "Не удалось прочитать JSON.") => {
     let appended;
     try {
       appended = await parseAppendVisits(text);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Не удалось прочитать файл.");
+      alert(e instanceof Error ? e.message : errorMessage);
       return;
     }
     if (!appended.length) {
-      alert("В файле нет квартир для добавления.");
+      alert("В JSON нет квартир для добавления.");
       return;
     }
     set((s) => ({ visits: [...s.visits, ...appended], screen: "visits" }), true);
     alert("Добавлено квартир: " + String(appended.length));
+  },
+  appendApartments: async (file: File) => {
+    await actions.appendApartmentsText(await file.text(), "Не удалось прочитать файл.");
+  },
+  appendApartmentsFromClipboard: async () => {
+    const nav = navigator as Navigator & { clipboard?: { readText?: () => Promise<string> } };
+    if (!nav.clipboard?.readText) {
+      alert("Браузер не поддерживает чтение текста из буфера. Вставьте JSON в файл.");
+      return;
+    }
+
+    let text = "";
+    try {
+      text = await nav.clipboard.readText();
+    } catch {
+      alert("Не удалось прочитать буфер обмена. Разрешите доступ или импортируйте JSON файлом.");
+      return;
+    }
+    if (!text.trim()) {
+      alert("В буфере обмена нет JSON.");
+      return;
+    }
+    await actions.appendApartmentsText(text, "Не удалось прочитать JSON из буфера.");
   },
 };
 

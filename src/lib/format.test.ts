@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  areaSquareMeters,
   cmpNullsLast,
   contactHref,
   phoneDigits,
@@ -251,6 +252,20 @@ describe("priceMillions", () => {
     expect(priceMillions("")).toBe("");
     expect(priceMillions("0")).toBe("");
     expect(priceMillions("free")).toBe("");
+  });
+});
+
+describe("areaSquareMeters", () => {
+  it("renders total area with metric suffix and comma decimals", () => {
+    expect(areaSquareMeters("54")).toBe("54 м²");
+    expect(areaSquareMeters("54.3 m²")).toBe("54,3 м²");
+    expect(areaSquareMeters("54,34")).toBe("54,3 м²");
+  });
+
+  it("returns empty string for zero/empty/unparseable", () => {
+    expect(areaSquareMeters("")).toBe("");
+    expect(areaSquareMeters("0")).toBe("");
+    expect(areaSquareMeters("большая")).toBe("");
   });
 });
 

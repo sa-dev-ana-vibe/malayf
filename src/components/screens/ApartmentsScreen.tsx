@@ -8,6 +8,7 @@ import {
   cmpNullsLast,
   latestDate,
   priceMillions,
+  areaSquareMeters,
 } from "../../lib/format";
 import { tagChip, newVisitStyle } from "../../ui/styles";
 import type { Visit, Tag, Category, SortBy } from "../../types";
@@ -143,6 +144,7 @@ function VisitCard({
   const fw = sc.total ? (sc.fail / sc.total) * 100 : 0;
   const nw = sc.total ? (sc.na / sc.total) * 100 : 0;
   const priceM = priceMillions(v.price);
+  const area = areaSquareMeters(v.areaTotal);
   const date = latestDate(v);
   const metaLabel =
     (date ? fmtDate(date) : "No date") + " · " + sc.answered + "/" + sc.total + " rated";
@@ -181,9 +183,10 @@ function VisitCard({
         )}
       </div>
       <div className="flex flex-col items-end justify-center min-w-[52px]">
-        {priceM && (
-          <div className="text-[14px] font-extrabold text-accent-dark mb-[6px] whitespace-nowrap">
-            {priceM}
+        {(priceM || area) && (
+          <div className="flex flex-col items-end gap-[2px] mb-[6px] whitespace-nowrap">
+            {priceM && <div className="text-[14px] font-extrabold text-accent-dark">{priceM}</div>}
+            {area && <div className="text-[11px] font-bold text-muted-2">{area}</div>}
           </div>
         )}
         <div

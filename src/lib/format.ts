@@ -122,6 +122,18 @@ export function priceMillions(price: string): string {
     : "";
 }
 
+/** "54.3" → "54,3 м²"; "" when not a positive number. */
+export function areaSquareMeters(area: string): string {
+  const n = parseFloat(
+    String(area || "")
+      .replace(/[^\d.,]/g, "")
+      .replace(",", "."),
+  );
+  if (!(n > 0)) return "";
+
+  return (Math.round(n * 10) / 10).toString().replace(".", ",") + " м²";
+}
+
 /** Russian-locale thousands grouping (non-breaking spaces), rounded. */
 export function fmtRu(n: number | null): string {
   return n == null ? "" : Math.round(n).toLocaleString("ru-RU");

@@ -1,19 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { actions } from "../../../store";
 import { ACCENT } from "../../../ui/styles";
 import { usePhotoUrl } from "../../../ui/usePhotoUrl";
 import type { Visit } from "../../../types";
 
-function PhotoLightbox({ id, name, onClose }: { id: string; name: string; onClose: () => void }) {
+function PhotoLightbox({
+  id,
+  name,
+  canNavigate,
+  onClose,
+  onNext,
+  onPrev,
+}: {
+  id: string;
+  name: string;
+  canNavigate: boolean;
+  onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}) {
   const url = usePhotoUrl(id);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const prevButtonRef = useRef<HTMLButtonElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft" && canNavigate) onPrev();
+      if (event.key === "ArrowRight" && canNavigate) onNext();
+      if (event.key === "Tab") {
+        const focusable = [
+          closeButtonRef.current,
+          canNavigate ? prevButtonRef.current : null,
+          canNavigate ? nextButtonRef.current : null,
+        ].filter((el): el is HTMLButtonElement => el != null);
+        if (focusable.length === 0) return;
+        const currentIndex = focusable.findIndex((el) => el === document.activeElement);
+        const fallbackIndex = event.shiftKey ? focusable.length - 1 : 0;
+        const nextIndex =
+          currentIndex < 0
+            ? fallbackIndex
+            : (currentIndex + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length;
+        event.preventDefault();
+        focusable[nextIndex].focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [canNavigate, onClose, onNext, onPrev]);
 
   return (
     <div
@@ -25,10 +64,12 @@ function PhotoLightbox({ id, name, onClose }: { id: string; name: string; onClos
       <button
         type="button"
         onClick={onClose}
-        aria-label="Закрыть просмотр фото"
+        aria-label="Закрыть просмотр фото фоном"
+        tabIndex={-1}
         className="absolute inset-0 border-none bg-transparent cursor-zoom-out"
       />
       <button
+        ref={closeButtonRef}
         type="button"
         onClick={onClose}
         aria-label="Закрыть просмотр фото"
@@ -36,6 +77,28 @@ function PhotoLightbox({ id, name, onClose }: { id: string; name: string; onClos
       >
         ×
       </button>
+      {canNavigate ? (
+        <>
+          <button
+            ref={prevButtonRef}
+            type="button"
+            onClick={onPrev}
+            aria-label="Предыдущее фото"
+            className="absolute left-[12px] top-1/2 z-[1] w-[34px] h-[34px] -translate-y-1/2 border-none rounded-full bg-[rgba(255,255,255,0.18)] text-white text-[24px] leading-none cursor-pointer flex items-center justify-center shadow-[0_8px_24px_rgba(0,0,0,0.24)]"
+          >
+            ‹
+          </button>
+          <button
+            ref={nextButtonRef}
+            type="button"
+            onClick={onNext}
+            aria-label="Следующее фото"
+            className="absolute right-[12px] top-1/2 z-[1] w-[34px] h-[34px] -translate-y-1/2 border-none rounded-full bg-[rgba(255,255,255,0.18)] text-white text-[24px] leading-none cursor-pointer flex items-center justify-center shadow-[0_8px_24px_rgba(0,0,0,0.24)]"
+          >
+            ›
+          </button>
+        </>
+      ) : null}
       {url ? (
         <img
           src={url}
@@ -114,7 +177,26 @@ export function PhotosSection({
   photoOrder: { src: string; i: number }[];
 }) {
   const [openPhotoId, setOpenPhotoId] = useState<string | null>(null);
+  const openerRef = useRef<HTMLButtonElement | null>(null);
   const photoName = av.name || "Apartment";
+  const openPhotoIndex = openPhotoId
+    ? photoOrder.findIndex(({ src }) => src === openPhotoId)
+    : -1;
+  const hasMultiplePhotos = photoOrder.length > 1;
+  const showNextPhoto = () => {
+    if (!hasMultiplePhotos || openPhotoIndex < 0) return;
+    const next = photoOrder[(openPhotoIndex + 1) % photoOrder.length];
+    setOpenPhotoId(next.src);
+  };
+  const showPrevPhoto = () => {
+    if (!hasMultiplePhotos || openPhotoIndex < 0) return;
+    const prev = photoOrder[(openPhotoIndex - 1 + photoOrder.length) % photoOrder.length];
+    setOpenPhotoId(prev.src);
+  };
+  const closeLightbox = () => {
+    setOpenPhotoId(null);
+    openerRef.current?.focus();
+  };
 
   return (
     <div>
@@ -129,7 +211,10 @@ export function PhotosSection({
             idx={i}
             isFloorPlan={src === av.floorPlan}
             name={photoName}
-            onOpen={() => setOpenPhotoId(src)}
+            onOpen={() => {
+              openerRef.current = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
+              setOpenPhotoId(src);
+            }}
           />
         ))}
         <label className="w-[78px] h-[78px] rounded-[9px] border-[1.5px] border-dashed border-[#cdc8da] bg-soft flex flex-col items-center justify-center gap-[3px] cursor-pointer text-muted-2 text-[11px] font-semibold">
@@ -153,8 +238,15 @@ export function PhotosSection({
           <span className="text-[18px] leading-none text-faint">⎘</span>Вставить
         </button>
       </div>
-      {openPhotoId ? (
-        <PhotoLightbox id={openPhotoId} name={photoName} onClose={() => setOpenPhotoId(null)} />
+      {openPhotoId && openPhotoIndex >= 0 ? (
+        <PhotoLightbox
+          id={openPhotoId}
+          name={photoName}
+          canNavigate={hasMultiplePhotos}
+          onClose={closeLightbox}
+          onNext={showNextPhoto}
+          onPrev={showPrevPhoto}
+        />
       ) : null}
     </div>
   );

@@ -30,6 +30,22 @@ export function contactHref(val: string): string {
   return val.includes("@") ? "mailto:" + val.trim() : "tel:" + val.replace(/[^\d+]/g, "");
 }
 
+export function phoneDigits(val: string): string {
+  return val.includes("@") ? "" : val.replace(/\D/g, "");
+}
+
+export function whatsappHref(phone: string, listingUrl?: string): string {
+  const digits = phoneDigits(phone);
+  if (!digits) return "#";
+
+  const normalizedListing = listingUrl ? normalizeUrl(listingUrl) : "";
+  const message = normalizedListing
+    ? `Здравствуйте, нашли ваше объявление ${normalizedListing}`
+    : "Здравствуйте";
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 export function hexToRgba(hex: string, a: number): string {
   let h = (hex || "#6a35d9").replace("#", "");
   if (h.length === 3)

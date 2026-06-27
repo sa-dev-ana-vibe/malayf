@@ -15,7 +15,7 @@ import type {
   SortBy,
   Visit,
 } from "./types";
-import { uid, visitDates } from "./lib/format";
+import { normalizeUrl, uid, visitDates } from "./lib/format";
 import {
   distributeWeightsInList,
   setCatWeightInList,
@@ -48,6 +48,128 @@ function subscribe(l: () => void) {
 }
 function getState() {
   return state;
+}
+
+
+const scalarMergeFields: (keyof Pick<
+  Visit,
+  | "name"
+  | "address"
+  | "notes"
+  | "price"
+  | "areaTotal"
+  | "areaLiving"
+  | "floor"
+  | "floorsTotal"
+  | "houseType"
+  | "yearBuilt"
+  | "invLive"
+  | "invGood"
+>)[] = [
+  "name",
+  "address",
+  "notes",
+  "price",
+  "areaTotal",
+  "areaLiving",
+  "floor",
+  "floorsTotal",
+  "houseType",
+  "yearBuilt",
+  "invLive",
+  "invGood",
+];
+
+function dedupeKeyFromUrl(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(normalizeUrl(trimmed));
+    parsed.hash = "";
+    parsed.searchParams.sort();
+    const path = parsed.pathname.replace(/\/+$/, "");
+    return (parsed.hostname.replace(/^www\./i, "") + path + parsed.search).toLowerCase();
+  } catch {
+    return trimmed.toLowerCase();
+  }
+}
+
+function visitDedupeKeys(v: Visit): string[] {
+  return v.links.map((l) => dedupeKeyFromUrl(l.url)).filter((x): x is string => x != null);
+}
+
+function mergeUniqueStrings(left: string[], right: string[]): string[] {
+  return [...left, ...right.filter((x) => x && !left.includes(x))];
+}
+
+function mergeDuplicateVisit(existing: Visit, incoming: Visit): { visit: Visit; conflicts: string[] } {
+  const conflicts: string[] = [];
+  const merged: Visit = {
+    ...existing,
+    dates: mergeUniqueStrings(existing.dates, incoming.dates),
+    photos: mergeUniqueStrings(existing.photos, incoming.photos),
+    contacts: [
+      ...existing.contacts,
+      ...incoming.contacts.filter(
+        (c) => !existing.contacts.some((e) => e.name === c.name && e.value === c.value),
+      ),
+    ],
+    links: [
+      ...existing.links,
+      ...incoming.links.filter((l) => {
+        const key = dedupeKeyFromUrl(l.url);
+        return key && !existing.links.some((e) => dedupeKeyFromUrl(e.url) === key);
+      }),
+    ],
+    tagIds: mergeUniqueStrings(existing.tagIds, incoming.tagIds),
+    redFlags: mergeUniqueStrings(existing.redFlags, incoming.redFlags),
+    results: { ...existing.results, ...incoming.results },
+  };
+
+  for (const field of scalarMergeFields) {
+    const oldValue = String(existing[field] ?? "").trim();
+    const newValue = String(incoming[field] ?? "").trim();
+    if (!oldValue && newValue) merged[field] = incoming[field] ?? "";
+    else if (oldValue && newValue && oldValue !== newValue) {
+      merged[field] = incoming[field] ?? "";
+      conflicts.push(field);
+    }
+  }
+
+  if (!existing.floorPlan && incoming.floorPlan) merged.floorPlan = incoming.floorPlan;
+  else if (existing.floorPlan && incoming.floorPlan && existing.floorPlan !== incoming.floorPlan) {
+    merged.floorPlan = incoming.floorPlan;
+    conflicts.push("floorPlan");
+  }
+
+  return { visit: merged, conflicts };
+}
+
+function mergeAppendVisits(existingVisits: Visit[], incomingVisits: Visit[]) {
+  const visits = existingVisits.slice();
+  const conflicts: { name: string; fields: string[] }[] = [];
+  let added = 0;
+  let merged = 0;
+
+  for (const incoming of incomingVisits) {
+    const keys = new Set(visitDedupeKeys(incoming));
+    const idx = keys.size
+      ? visits.findIndex((v) => visitDedupeKeys(v).some((key) => keys.has(key)))
+      : -1;
+    if (idx === -1) {
+      visits.push(incoming);
+      added += 1;
+      continue;
+    }
+    const result = mergeDuplicateVisit(visits[idx], incoming);
+    visits[idx] = result.visit;
+    merged += 1;
+    if (result.conflicts.length) {
+      conflicts.push({ name: result.visit.name || result.visit.address || "квартира", fields: result.conflicts });
+    }
+  }
+
+  return { visits, added, merged, conflicts };
 }
 
 function persistNow() {
@@ -518,8 +640,22 @@ export const actions = {
       alert("В JSON нет квартир для добавления.");
       return;
     }
-    set((s) => ({ visits: [...s.visits, ...appended], screen: "visits" }), true);
-    alert("Добавлено квартир: " + String(appended.length));
+    const result = mergeAppendVisits(state.visits, appended);
+    set({ visits: result.visits, screen: "visits" }, true);
+    const conflictText = result.conflicts.length
+      ? "\nКонфликты перезаписаны свежими данными: " +
+        result.conflicts
+          .map((c) => c.name + " (" + c.fields.join(", ") + ")")
+          .join("; ")
+      : "";
+    alert(
+      "Добавлено квартир: " +
+        String(result.added) +
+        ". Объединено дублей: " +
+        String(result.merged) +
+        "." +
+        conflictText,
+    );
   },
   appendApartments: async (file: File) => {
     await actions.appendApartmentsText(await file.text(), "Не удалось прочитать файл.");

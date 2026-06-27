@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   cmpNullsLast,
   contactHref,
+  phoneDigits,
+  whatsappHref,
   fmtDate,
   fmtRu,
   formatThousands,
@@ -88,6 +90,25 @@ describe("contactHref", () => {
   it("builds a tel: link stripping all but digits and +", () => {
     expect(contactHref("+7 (999) 123-45-67")).toBe("tel:+79991234567");
     expect(contactHref("8 800 555 35 35")).toBe("tel:88005553535");
+  });
+});
+
+describe("phoneDigits", () => {
+  it("keeps only digits for WhatsApp deep links", () => {
+    expect(phoneDigits("+7 (999) 123-45-67")).toBe("79991234567");
+    expect(phoneDigits("user@example.com")).toBe("");
+  });
+});
+
+describe("whatsappHref", () => {
+  it("builds a wa.me link with a prefilled listing message", () => {
+    expect(whatsappHref("+7 (999) 123-45-67", "example.com/listing")).toBe(
+      "https://wa.me/79991234567?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%2C%20%D0%BD%D0%B0%D1%88%D0%BB%D0%B8%20%D0%B2%D0%B0%D1%88%D0%B5%20%D0%BE%D0%B1%D1%8A%D1%8F%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20https%3A%2F%2Fexample.com%2Flisting",
+    );
+  });
+
+  it("returns '#' when a WhatsApp number is not available", () => {
+    expect(whatsappHref("user@example.com", "example.com/listing")).toBe("#");
   });
 });
 

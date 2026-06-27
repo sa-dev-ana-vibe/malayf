@@ -232,6 +232,55 @@ describe("appendApartments (additive import)", () => {
 
     expect(result.current.visits).toHaveLength(0);
   });
+
+  it("merges appended duplicate listings by URL and lets incoming conflicts win", async () => {
+    const alert = vi.fn();
+    vi.stubGlobal("alert", alert);
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+
+    await act(async () => {
+      await store.actions.appendApartmentsText(
+        JSON.stringify({
+          visits: [
+            {
+              name: "Old Flat",
+              price: "100",
+              areaTotal: "",
+              links: [{ url: "https://example.com/listing/42?b=2&a=1#ignored" }],
+            },
+          ],
+        }),
+      );
+    });
+
+    await act(async () => {
+      await store.actions.appendApartmentsText(
+        JSON.stringify({
+          visits: [
+            {
+              name: "Fresh Flat",
+              price: "200",
+              areaTotal: "55",
+              links: [{ url: "http://www.example.com/listing/42?a=1&b=2" }],
+              contacts: [{ name: "Agent", value: "+1" }],
+            },
+          ],
+        }),
+      );
+    });
+
+    expect(result.current.visits).toHaveLength(1);
+    expect(result.current.visits[0]).toMatchObject({
+      name: "Fresh Flat",
+      price: "200",
+      areaTotal: "55",
+    });
+    expect(result.current.visits[0].contacts).toHaveLength(1);
+    expect(alert).toHaveBeenLastCalledWith(expect.stringContaining("Объединено дублей: 1"));
+    expect(alert).toHaveBeenLastCalledWith(expect.stringContaining("name, price"));
+  });
+
   it("rejects a file with no visits array and leaves data untouched", async () => {
     const store = await freshStore();
     const { result } = renderHook(() => store.useApp());

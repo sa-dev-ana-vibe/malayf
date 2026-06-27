@@ -53,7 +53,13 @@ describe("ChecklistScreen navigation helpers", () => {
       screen.getByRole("button", { name: "🗑 Удалить все квартиры" }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("button", { name: "⚠️ Удалить все данные" }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByText(/очистит только список квартир после подтверждения/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/после двух подтверждений сбросит квартиры, чек-лист, метки и ред-флаги/i),
     ).toBeInTheDocument();
   });
 });

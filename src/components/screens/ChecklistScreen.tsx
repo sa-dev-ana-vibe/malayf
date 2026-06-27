@@ -325,11 +325,18 @@ export default function ChecklistScreen() {
             📋 Вставить JSON
           </button>
         </div>
+        <button
+          onClick={() => actions.deleteAllVisits()}
+          className="mt-[8px] w-full p-[11px] border border-[#fecaca] bg-[#fef2f2] rounded-[10px] text-[#b91c1c] text-[12.5px] font-bold cursor-pointer"
+        >
+          🗑 Удалить все квартиры
+        </button>
         <div className="text-[11px] text-faint leading-[1.5] mt-[8px]">
           Экспорт сохранит все квартиры, чек-лист, метки и ред-флаги в файл.
           Импорт заменит текущие данные. 
           «Добавить квартиры из JSON» только дополнит список квартир из файла или буфера — чек-лист, метки и ред-флаги
           останутся как есть. 
+          «Удалить все квартиры» очистит только список квартир после подтверждения.
           «Скопировать промпт для LLM» даст готовый промпт, чтобы превратить текст объявлений в такой JSON.
         </div>
       </div>

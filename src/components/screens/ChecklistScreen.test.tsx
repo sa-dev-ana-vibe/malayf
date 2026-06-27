@@ -43,4 +43,17 @@ describe("ChecklistScreen navigation helpers", () => {
     expect(firstCategory).not.toBeNull();
     expect(within(firstCategory as HTMLElement).getByText(/\d+ шт\./)).toBeInTheDocument();
   });
+
+  it("shows a confirmed destructive action for clearing apartments", async () => {
+    const { default: ChecklistScreen } = await freshChecklistScreen();
+
+    render(<ChecklistScreen />);
+
+    expect(
+      screen.getByRole("button", { name: "🗑 Удалить все квартиры" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/очистит только список квартир после подтверждения/i),
+    ).toBeInTheDocument();
+  });
 });

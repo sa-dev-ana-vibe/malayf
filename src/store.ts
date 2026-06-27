@@ -153,6 +153,24 @@ export const actions = {
       true,
     );
   },
+  deleteAllVisits: () => {
+    if (!state.visits.length) {
+      alert("Нет квартир для удаления.");
+      return;
+    }
+    if (!confirm("Удалить ВСЕ квартиры? Чек-лист, метки и ред-флаги останутся.")) return;
+    const photoIds = state.visits.flatMap((v) => v.photos);
+    if (photoIds.length) void deletePhotos(photoIds);
+    set(
+      {
+        visits: [],
+        compareIds: [],
+        activeVisitId: null,
+        screen: "visits",
+      },
+      true,
+    );
+  },
   updateActive: (field: keyof Visit, value: string) =>
     updateActiveVisit((v) => ({ ...v, [field]: value })),
 

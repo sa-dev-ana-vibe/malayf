@@ -15,6 +15,8 @@ import type {
   SortBy,
   Visit,
 } from "./types";
+import { defaultCats, defaultRedFlags, defaultTags } from "./lib/defaults";
+import { uid, visitDates } from "./lib/format";
 import { normalizeUrl, uid, visitDates } from "./lib/format";
 import {
   distributeWeightsInList,
@@ -272,6 +274,48 @@ export const actions = {
         screen: s.activeVisitId === id ? "visits" : s.screen,
         activeVisitId: s.activeVisitId === id ? null : s.activeVisitId,
       }),
+      true,
+    );
+  },
+  deleteAllVisits: () => {
+    if (!state.visits.length) {
+      alert("Нет квартир для удаления.");
+      return;
+    }
+    if (!confirm("Удалить ВСЕ квартиры? Чек-лист, метки и ред-флаги останутся.")) return;
+    const photoIds = state.visits.flatMap((v) => v.photos);
+    if (photoIds.length) void deletePhotos(photoIds);
+    set(
+      {
+        visits: [],
+        compareIds: [],
+        activeVisitId: null,
+        screen: "visits",
+      },
+      true,
+    );
+  },
+  deleteAllData: () => {
+    if (!confirm("Сбросить ВСЕ данные приложения? Будут удалены квартиры, чек-лист, метки и ред-флаги.")) {
+      return;
+    }
+    if (!confirm("Точно удалить все данные? Это действие нельзя отменить.")) return;
+    const photoIds = state.visits.flatMap((v) => v.photos);
+    if (photoIds.length) void deletePhotos(photoIds);
+    set(
+      {
+        categories: defaultCats(),
+        visits: [],
+        tags: defaultTags(),
+        redFlagDefs: defaultRedFlags(),
+        compareIds: [],
+        tagFilter: [],
+        sortBy: "default",
+        tagsFrom: "visits",
+        editLinkId: null,
+        activeVisitId: null,
+        screen: "visits",
+      },
       true,
     );
   },

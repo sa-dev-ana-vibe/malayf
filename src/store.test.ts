@@ -92,6 +92,80 @@ describe("cascade deletes (the load-bearing ones QA flagged)", () => {
     expect(result.current.visits).toHaveLength(0);
     expect(result.current.compareIds).not.toContain(id);
   });
+
+  it("deleteAllVisits clears visits, compare selection, and active detail without touching settings", async () => {
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+    act(() => store.actions.newVisit());
+    const ids = result.current.visits.map((v) => v.id);
+    const tagCount = result.current.tags.length;
+    const redFlagCount = result.current.redFlagDefs.length;
+    const categoryCount = result.current.categories.length;
+    act(() => store.actions.toggleCompare(ids[0]));
+
+    act(() => store.actions.deleteAllVisits());
+
+    expect(result.current.visits).toHaveLength(0);
+    expect(result.current.compareIds).toHaveLength(0);
+    expect(result.current.activeVisitId).toBeNull();
+    expect(result.current.screen).toBe("visits");
+    expect(result.current.tags).toHaveLength(tagCount);
+    expect(result.current.redFlagDefs).toHaveLength(redFlagCount);
+    expect(result.current.categories).toHaveLength(categoryCount);
+  });
+
+  it("deleteAllVisits leaves visits intact when confirmation is cancelled", async () => {
+    vi.stubGlobal("confirm", () => false);
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+
+    act(() => store.actions.deleteAllVisits());
+
+    expect(result.current.visits).toHaveLength(1);
+    expect(result.current.screen).toBe("detail");
+  });
+
+  it("deleteAllData resets apartments and editable settings after two confirmations", async () => {
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+    act(() => store.actions.addTag());
+    act(() => store.actions.renameTag(result.current.tags.at(-1)?.id ?? "", "Custom tag"));
+    act(() => store.actions.addRedFlag());
+    act(() => store.actions.renameRedFlag(result.current.redFlagDefs.length - 1, "Custom flag"));
+    act(() => store.actions.addCategory());
+    act(() => store.actions.toggleCompare(result.current.visits[0].id));
+    act(() => store.actions.toggleFilter(result.current.tags[0].id));
+    act(() => store.actions.setSortBy("rating"));
+
+    act(() => store.actions.deleteAllData());
+
+    expect(result.current.visits).toHaveLength(0);
+    expect(result.current.compareIds).toHaveLength(0);
+    expect(result.current.tagFilter).toHaveLength(0);
+    expect(result.current.activeVisitId).toBeNull();
+    expect(result.current.screen).toBe("visits");
+    expect(result.current.sortBy).toBe("default");
+    expect(result.current.tags.some((t) => t.name === "Custom tag")).toBe(false);
+    expect(result.current.redFlagDefs).not.toContain("Custom flag");
+    expect(result.current.categories.some((c) => c.name === "New category")).toBe(false);
+  });
+
+  it("deleteAllData does nothing unless both confirmations are accepted", async () => {
+    const confirm = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+    vi.stubGlobal("confirm", confirm);
+    const store = await freshStore();
+    const { result } = renderHook(() => store.useApp());
+    act(() => store.actions.newVisit());
+
+    act(() => store.actions.deleteAllData());
+
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(result.current.visits).toHaveLength(1);
+    expect(result.current.screen).toBe("detail");
+  });
 });
 
 describe("checklist weights", () => {

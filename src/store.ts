@@ -16,7 +16,6 @@ import type {
   Visit,
 } from "./types";
 import { defaultCats, defaultRedFlags, defaultTags } from "./lib/defaults";
-import { uid, visitDates } from "./lib/format";
 import { normalizeUrl, uid, visitDates } from "./lib/format";
 import {
   distributeWeightsInList,
